@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'message_widget.dart';
 import 'theme.dart';
 
 class ChatWidget extends StatefulWidget {
@@ -32,7 +33,10 @@ class _ChatWidgetState extends State<ChatWidget> {
             shrinkWrap: true,
             controller: _scrollController,
             itemBuilder: (context, idx) {
-              return Container();
+              return MessageWidget(
+                text: "text",
+                isFromUser: 'user' == 'user',
+              );
             },
             itemCount: 2,
           ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
+import 'consts.dart';
+import 'emoji_grid.dart';
 import 'message_widget.dart';
-import 'theme.dart';
 
 class ChatWidget extends StatefulWidget {
   const ChatWidget({super.key});
@@ -11,6 +13,8 @@ class ChatWidget extends StatefulWidget {
 }
 
 class _ChatWidgetState extends State<ChatWidget> {
+  late final GenerativeModel _model;
+  late final ChatSession _chat;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   final FocusNode _textFieldFocus = FocusNode(debugLabel: 'TextField');
@@ -19,6 +23,18 @@ class _ChatWidgetState extends State<ChatWidget> {
   @override
   void initState() {
     super.initState();
+    _model = GenerativeModel(
+      model: 'gemini-1.0-pro',
+      apiKey: apiKey,
+    );
+    // _chat = _model.startChat(history: [Content.text('guess the movie based on the emoji provided'),Content.model([TextPart('Great to meet you. What would you like to know?')])]);
+
+    _chat = _model.startChat(history: [
+      Content.text(
+          "Let's play a two player game where I have to guess the names of movies from the emojis and then I will ask the same."),
+      Content.model(
+          [TextPart("Here's the first one: 🍫🏭👦🏻. What movie is this?")])
+    ]);
   }
 
   @override
@@ -33,12 +49,17 @@ class _ChatWidgetState extends State<ChatWidget> {
             shrinkWrap: true,
             controller: _scrollController,
             itemBuilder: (context, idx) {
+              var content = _chat.history.toList()[idx];
+              var text = content.parts
+                  .whereType<TextPart>()
+                  .map<String>((e) => e.text)
+                  .join('');
               return MessageWidget(
-                text: "text",
-                isFromUser: 'user' == 'user',
+                text: text,
+                isFromUser: content.role == 'user',
               );
             },
-            itemCount: 2,
+            itemCount: _chat.history.length,
           ),
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -87,6 +108,34 @@ class _ChatWidgetState extends State<ChatWidget> {
     setState(() {
       _loading = true;
     });
+
+    try {
+      var response = await _chat.sendMessage(
+        Content.text(message),
+      );
+      var text = response.text;
+
+      if (text == null) {
+        _showError('Empty response.');
+        return;
+      } else {
+        setState(() {
+          _loading = false;
+          _scrollDown();
+        });
+      }
+    } catch (e) {
+      _showError(e.toString());
+      setState(() {
+        _loading = false;
+      });
+    } finally {
+      _textController.clear();
+      setState(() {
+        _loading = false;
+      });
+      _textFieldFocus.requestFocus();
+    }
   }
 
   void _scrollDown() {

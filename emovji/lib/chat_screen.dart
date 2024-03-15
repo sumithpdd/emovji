@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'chat_widget.dart';
+import 'emoji_grid.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, required this.title});
@@ -36,6 +37,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(
+              height: 80,
+              child: EmojiGrid(),
             ),
             const ChatWidget(),
           ],
